@@ -1,0 +1,6 @@
+sample:
+  name: USB digital GPIO I/O extender
+tests:
+  usb.hid-mouse:
+    depends_on: usb_device
+    tags: usb
