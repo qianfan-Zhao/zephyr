@@ -77,7 +77,7 @@ void arm_core_mpu_disable(void)
 }
 
 #if defined(CONFIG_USERSPACE) || defined(CONFIG_MPU_STACK_GUARD) || \
-	defined(CONFIG_APPLICATION_MEMORY)
+	defined(CONFIG_APPLICATION_MEMORY) || defined(CONFIG_RAM_FUNCTION)
 
 /**
  * This internal function is utilized by the MPU driver to parse the intent
@@ -90,6 +90,11 @@ static inline int _get_region_attr_by_type(arm_mpu_region_attr_t *p_attr,
 	u32_t type, u32_t base, u32_t size)
 {
 	switch (type) {
+#ifdef CONFIG_RAM_FUNCTION
+	case RAM_FUNCTION_REGION:
+		_get_mpu_ramfunc_region_attr(p_attr, base, size);
+		return 0;
+#endif
 #ifdef CONFIG_USERSPACE
 	case THREAD_STACK_REGION:
 		_get_mpu_ram_region_attr(p_attr, P_RW_U_RW, base, size);
@@ -351,16 +356,30 @@ static int arm_mpu_init(struct device *arg)
 		_region_init(r_index, &mpu_config.mpu_regions[r_index]);
 	}
 
-#if defined(CONFIG_APPLICATION_MEMORY)
+#if defined(CONFIG_APPLICATION_MEMORY) || defined(CONFIG_RAM_FUNCTION)
 	u32_t index, size;
 	struct arm_mpu_region region_conf;
+#endif
 
+#if defined(CONFIG_APPLICATION_MEMORY)
 	/* configure app data portion */
 	index = _get_region_index_by_type(THREAD_APP_DATA_REGION);
 	size = (u32_t)&__app_ram_end - (u32_t)&__app_ram_start;
 	_get_region_attr_by_type(&region_conf.attr, THREAD_APP_DATA_REGION,
 			(u32_t)&__app_ram_start, size);
 	region_conf.base = (u32_t)&__app_ram_start;
+	if (size > 0) {
+		_region_init(index, &region_conf);
+	}
+#endif
+
+#if defined(CONFIG_RAM_FUNCTION)
+	/* configure ramfunc portion */
+	index = _get_region_index_by_type(RAM_FUNCTION_REGION);
+	size = (u32_t)&__ramfunc_ram_end - (u32_t)&__ramfunc_ram_start;
+	_get_region_attr_by_type(&region_conf.attr, RAM_FUNCTION_REGION,
+				 (u32_t)&__ramfunc_ram_start, size);
+	region_conf.base = (u32_t)&__ramfunc_ram_start;
 	if (size > 0) {
 		_region_init(index, &region_conf);
 	}

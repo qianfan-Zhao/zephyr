@@ -195,6 +195,13 @@ config APPLICATION_MEMORY
 	  will have the project-level application objects and any libraries
 	  including the C library in it.
 
+config RAM_FUNCTION
+	bool "Enable __ramfunc support"
+	help
+	  Using '__ramfunc' places a function into RAM instead of Flash.
+	  Code that for example reprograms flash at runtime can't execute
+	  from flash, in that case must placing code into RAM.
+
 choice SCHED_ALGORITHM
 	prompt "Scheduler priority queue algorithm"
 	default SCHED_DUMB

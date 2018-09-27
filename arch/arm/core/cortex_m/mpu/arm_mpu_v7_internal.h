@@ -36,7 +36,7 @@ static void _region_init(u32_t index, struct arm_mpu_region *region_conf)
 }
 
 #if defined(CONFIG_USERSPACE) || defined(CONFIG_MPU_STACK_GUARD) || \
-	defined(CONFIG_APPLICATION_MEMORY)
+	defined(CONFIG_APPLICATION_MEMORY) || defined(CONFIG_RAM_FUNCTION)
 
 static inline u8_t _get_num_regions(void);
 static inline u32_t _get_region_index_by_type(u32_t type);
@@ -105,6 +105,16 @@ static inline void _get_mpu_ram_region_attr(arm_mpu_region_attr_t *p_attr,
 
 	p_attr->rasr = _get_region_attr(1, ap, 1, 1, 1, 1, 0, size);
 }
+
+#ifdef CONFIG_RAM_FUNCTION
+static inline void _get_mpu_ramfunc_region_attr(arm_mpu_region_attr_t *p_attr,
+						u32_t base, u32_t size)
+{
+	ARG_UNUSED(base);
+
+	p_attr->rasr = _get_region_attr(0, RO, 0, 1, 0, 0, 0, size);
+}
+#endif
 
 /**
  * This internal function is utilized by the MPU driver to combine a given

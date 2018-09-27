@@ -32,6 +32,9 @@ extern "C" {
  *
  */
 enum {
+#ifdef CONFIG_RAM_FUNCTION
+	RAM_FUNCTION_REGION,
+#endif
 #ifdef CONFIG_APPLICATION_MEMORY
 	THREAD_APP_DATA_REGION,
 #endif

@@ -415,6 +415,9 @@ SECTIONS
 
     __data_ram_end = .;
 
+#ifdef CONFIG_RAM_FUNCTION
+#include <linker/ramfunc.ld>
+#endif
 
     /* Define linker symbols */
 
