@@ -1587,12 +1587,70 @@ static void generate_random_mac(u8_t mac_addr[6])
 }
 #endif
 
+#if defined(CONFIG_ETH_SAM_GMAC_UNIQUE_MAC)
+static void __ramfunc read_unique_id(u32_t uid[4])
+{
+	u32_t *iflash_addr = (u32_t *)IFLASH_ADDR;
+	u32_t status;
+
+	EFC->EEFC_FMR |= (0x1u << 16);
+	/* Send the Start Read command */
+	EFC->EEFC_FCR = EEFC_FCR_FKEY_PASSWD | EEFC_FCR_FARG(0) |
+			EEFC_FCR_FCMD(EEFC_FCR_FCMD_STUI_Val);
+
+	/* Wait for the FRDY bit in the Flash Programming Status Register
+	 * (EEFC_FSR) falls.
+	 */
+	do {
+		status = EFC->EEFC_FSR;
+	} while ((status & EEFC_FSR_FRDY) == EEFC_FSR_FRDY);
+
+	uid[0] = iflash_addr[0];
+	uid[1] = iflash_addr[1];
+	uid[2] = iflash_addr[2];
+	uid[3] = iflash_addr[3];
+
+	/* To stop the read mode */
+	EFC->EEFC_FCR = EEFC_FCR_FKEY_PASSWD | EEFC_FCR_FARG(0) |
+			EEFC_FCR_FCMD(EEFC_FCR_FCMD_SPUI_Val);
+
+	/* Wait for the FRDY bit in the Flash Programming Status Register
+	 * (EEFC_FSR) rises.
+	 */
+	do {
+		status = EFC->EEFC_FSR;
+	} while ((status & EEFC_FSR_FRDY) != EEFC_FSR_FRDY);
+
+	EFC->EEFC_FMR &= ~(0x1u << 16);
+}
+
+static void generate_unique_mac(u8_t mac_addr[6])
+{
+	u32_t uid[4], hash;
+
+	read_unique_id(uid);
+	hash = uid[0] ^ uid[1] ^ uid[2] ^ uid[3];
+
+	/* Atmel's OUI */
+	mac_addr[0] = 0x00;
+	mac_addr[1] = 0x04;
+	mac_addr[2] = 0x25;
+
+	mac_addr[3] = hash >> 8;
+	mac_addr[4] = hash >> 16;
+	/* Locally administered, unicast */
+	mac_addr[5] = ((hash >> 0) & 0xfc) | 0x02;
+}
+#endif
+
 static void generate_mac(u8_t mac_addr[6])
 {
 #if defined(CONFIG_ETH_SAM_GMAC_MAC_I2C_EEPROM)
 	get_mac_addr_from_i2c_eeprom(mac_addr);
 #elif defined(CONFIG_ETH_SAM_GMAC_RANDOM_MAC)
 	generate_random_mac(mac_addr);
+#elif defined(CONFIG_ETH_SAM_GMAC_UNIQUE_MAC)
+	generate_unique_mac(mac_addr);
 #endif
 }
 

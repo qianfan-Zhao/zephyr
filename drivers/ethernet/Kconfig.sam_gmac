@@ -77,6 +77,12 @@ config ETH_SAM_GMAC_RANDOM_MAC
 	help
 	  Generate a random MAC address dynamically.
 
+config ETH_SAM_GMAC_UNIQUE_MAC
+	bool "Unique MAC address"
+	select RAM_FUNCTION
+	help
+	  Generate a unique MAC address by using the chip's unique id.
+
 endchoice
 
 if ETH_SAM_GMAC_MAC_MANUAL
